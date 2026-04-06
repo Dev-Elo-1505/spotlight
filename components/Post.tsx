@@ -7,6 +7,8 @@ import { useMutation } from "convex/react";
 import { Image } from "expo-image";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+import { formatDistanceToNow } from 'date-fns'
+import CommentsModal from "./CommentsModal";
 
 type PostProps = {
   post: {
@@ -28,7 +30,10 @@ type PostProps = {
 
 const Post = ({ post }: PostProps) => {
   const [isLiked, setIsLiked] = useState(post.isLiked);
+   const [showComments, setShowComments] = useState(false);
+   
   const toggleLike = useMutation(api.posts.toggleLike);
+ 
 
   const handleLike = async () => {
     try {
@@ -77,7 +82,7 @@ const Post = ({ post }: PostProps) => {
               color={isLiked ? COLORS.primary : COLORS.white}
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => {}}>
+          <TouchableOpacity onPress={() => setShowComments(true)}>
             <Ionicons
               name="chatbubble-outline"
               size={22}
@@ -105,7 +110,21 @@ const Post = ({ post }: PostProps) => {
             <Text style={styles.captionText}>{post.caption}</Text>
           </View>
         )}
+        {post.comments > 0 && (
+          <TouchableOpacity onPress={() => setShowComments(true)}>
+            <Text style={styles.commentsText}>View all {post.comments} comments</Text>
+          </TouchableOpacity>
+        )}
+
+        <Text style={styles.timeAgo}>
+          {formatDistanceToNow(post._creationTime, { addSuffix: true })}
+        </Text>
       </View>
+      <CommentsModal
+        postId={post._id}
+        visible={showComments}
+        onClose={() => setShowComments(false)}
+      />
     </View>
   );
 };
