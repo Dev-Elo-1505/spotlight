@@ -6,7 +6,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "convex/react";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -40,22 +39,33 @@ const CreateScreen = () => {
   const generateUploadUrl = useMutation(api.posts.generateUploadUrl);
   const createPost = useMutation(api.posts.createPost);
 
-   const handleShare = async () => {
+  const handleShare = async () => {
     if (!selectedImage) return;
 
     try {
       setIsSharing(true);
       const uploadUrl = await generateUploadUrl();
 
-      const uploadResult = await FileSystem.uploadAsync(uploadUrl, selectedImage, {
-        httpMethod: "POST",
-        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-        mimeType: "image/jpeg",
+      const imageResponse = await fetch(selectedImage);
+      if (!imageResponse.ok) throw new Error("Could not read selected image");
+
+      const imageBlob = await imageResponse.blob();
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": imageBlob.type || "image/jpeg",
+        },
+        body: imageBlob,
       });
 
-      if (uploadResult.status !== 200) throw new Error("Upload failed");
+      if (!uploadResponse.ok) {
+        const uploadErrorText = await uploadResponse.text();
+        throw new Error(
+          `Upload failed (${uploadResponse.status}): ${uploadErrorText}`,
+        );
+      }
 
-      const { storageId } = JSON.parse(uploadResult.body);
+      const { storageId } = await uploadResponse.json();
       await createPost({ storageId, caption });
 
       setSelectedImage(null);
@@ -63,7 +73,7 @@ const CreateScreen = () => {
 
       router.push("/(tabs)");
     } catch (error) {
-      console.log("Error sharing post");
+      console.log("Error sharing post:", error);
     } finally {
       setIsSharing(false);
     }
