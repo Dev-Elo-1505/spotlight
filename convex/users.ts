@@ -56,3 +56,28 @@ export const getUserByClerkId = query({
     return user;
   },
 });
+
+export const updateProfile = mutation({
+  args: {
+    fullname: v.string(),
+    bio: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+
+    await ctx.db.patch(currentUser._id, {
+      fullname: args.fullname,
+      bio: args.bio,
+    });
+  },
+});
+
+export const getUserProfile = query({
+  args: { id: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.id);
+    if (!user) throw new Error("User not found");
+
+    return user;
+  },
+});
