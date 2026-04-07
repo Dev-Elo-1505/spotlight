@@ -22,7 +22,7 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{
         tabBarIcon: ({size, color}) => <Ionicons name='home' size={size} color={color} />
       }} />
-      <Tabs.Screen name="bookmark" options={{
+      <Tabs.Screen name="bookmarks" options={{
         tabBarIcon: ({size, color}) => <Ionicons name='bookmark' size={size} color={color} />
       }} />
       <Tabs.Screen name="create" options={{
